@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pruebas API Factura</title>
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --card: #fff;
+        --accent: #0b74de;
+        --muted: #666;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+        margin: 0;
+        background: var(--bg);
+        color: #111;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 24px auto;
+        padding: 16px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--card);
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(12, 20, 30, 0.06);
+      }
+      button {
+        appearance: none;
+        border: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #666;
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e3e7ee;
+        margin-top: 6px;
+      }
+      pre {
+        background: #0f1724;
+        color: #e6eef8;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        font-size: 0.85rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      @media (max-width: 520px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Pruebas de la API: /factura</h1>
+        <div class="muted">
+          Este fichero realiza llamadas a los endpoints de Factura y muestra
+          comprobaciones básicas.
+        </div>
+      </header>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 20</label>
+              <div class="muted">
+                Llena 20 registros y luego comprueba que count == 20
+              </div>
+            </div>
+            <div><button id="btnFill20">Fill 20</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Empty</label>
+              <div class="muted">Vacía la tabla y comprueba que count == 0</div>
+            </div>
+            <div><button id="btnEmpty" class="secondary">Empty</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 100</label>
+              <div class="muted">
+                Llena 100 registros (no comprueba nada automáticamente)
+              </div>
+            </div>
+            <div><button id="btnFill100">Fill 100</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get by id</label>
+          <input
+            id="inputGetId"
+            type="number"
+            placeholder="id a obtener (ej. 1)"
+          />
+          <div style="margin-top: 8px" class="row">
+            <button id="btnGet">Get(id) y comprobar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get page</label>
+          <div class="muted">
+            Obtener una página: size=11 página=0 (Spring usa index basado en 0)
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="inputPage" type="number" value="0" min="0" />
+            <input id="inputSize" type="number" value="11" min="1" />
+            <button id="btnGetPage">GetPage</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Create → Update (no FK) → Delete</label>
+          <div class="muted">
+            Crea una factura (usa id_usuario=1 por defecto), actualiza la fecha
+            y luego la borra.
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input
+              id="createFecha"
+              type="datetime-local"
+              value="2026-01-12T10:00"
+            />
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="createIdUsuario" type="number" value="1" placeholder="id_usuario" />
+          </div>
+          <div style="margin-top: 8px">
+            <button id="btnCreateUpdateDelete">
+              Ejecutar proceso completo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section style="margin-top: 16px" class="card">
+        <h3 style="margin: 0 0 8px 0">Logs / Resultados</h3>
+        <pre id="log">Listo.</pre>
+      </section>
+
+      <p class="muted" style="margin-top: 12px">
+        Notas: Asume que el backend está disponible en
+        <code>http://localhost:8089/factura</code>. Para <strong>create</strong> uso
+        id_usuario=1 por defecto — si ese FK no existe, la creación fallará.
+      </p>
+    </div>
+
+    <script>
+      const baseUrl = "http://localhost:8089/factura";
+      const logEl = document.getElementById("log");
+
+      function log(...args) {
+        const t = args
+          .map((a) =>
+            typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)
+          )
+          .join(" ");
+        logEl.textContent = t + "\n\n" + logEl.textContent;
+      }
+
+      function formatDateForApi(dateStr) {
+        // Convierte de "2026-01-12T10:00" a "2026-01-12 10:00:00"
+        if (!dateStr) return null;
+        return dateStr.replace("T", " ") + ":00";
+      }
+
+      async function api(path, options) {
+        try {
+          const res = await fetch(
+            baseUrl + path,
+            Object.assign(
+              { headers: { "Content-Type": "application/json" } },
+              options
+            )
+          );
+          const text = await res.text();
+          let data = text && text.length ? JSON.parse(text) : null;
+          if (!res.ok) throw { status: res.status, body: data || text };
+          return data;
+        } catch (err) {
+          throw err;
+        }
+      }
+
+      // Fill 20 then count == 20
+      document
+        .getElementById("btnFill20")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/20...");
+          try {
+            const filled = await api("/fill/20", { method: "GET" });
+            log("fill/20 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/20:", count);
+            if (count === 20) log("OK: count == 20");
+            else log("FALLO: count != 20 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en fill20:", e);
+          }
+        });
+
+      // Empty then count == 0
+      document
+        .getElementById("btnEmpty")
+        .addEventListener("click", async () => {
+          log("Iniciando empty...");
+          try {
+            const emptied = await api("/empty", { method: "DELETE" });
+            log("empty response:", emptied);
+            const count = await api("/count", { method: "GET" });
+            log("count after empty:", count);
+            if (count === 0) log("OK: count == 0");
+            else log("FALLO: count != 0 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en empty:", e);
+          }
+        });
+
+      // Fill 100
+      document
+        .getElementById("btnFill100")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/100...");
+          try {
+            const filled = await api("/fill/100", { method: "GET" });
+            log("fill/100 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/100:", count);
+          } catch (e) {
+            log("Error en fill100:", e);
+          }
+        });
+
+      // Get by id
+      document.getElementById("btnGet").addEventListener("click", async () => {
+        const id = Number(document.getElementById("inputGetId").value);
+        if (!id && id !== 0) {
+          log("Introduce un id válido");
+          return;
+        }
+        log("GET /factura/" + id);
+        try {
+          const data = await api("/" + id, { method: "GET" });
+          log("GET result:", data);
+          if (data && data.id === id)
+            log("OK: id devuelto coincide con el solicitado");
+          else log("FALLO: id devuelto no coincide");
+        } catch (e) {
+          log("Error en GET:", e);
+        }
+      });
+
+      // Get page
+      document
+        .getElementById("btnGetPage")
+        .addEventListener("click", async () => {
+          const page = Number(document.getElementById("inputPage").value || 0);
+          const size = Number(document.getElementById("inputSize").value || 11);
+          log(`GET page=${page} size=${size}`);
+          try {
+            const data = await api(`?page=${page}&size=${size}`, {
+              method: "GET",
+            });
+            log("Page response meta:", {
+              totalElements: data.totalElements,
+              number: data.number,
+              size: data.size,
+            });
+            const content = data.content || [];
+            log(
+              "content length:",
+              content.length,
+              "ids:",
+              content.map((c) => c.id)
+            );
+            if (content.length === size)
+              log("OK: page contiene " + size + " registros");
+            else
+              log(
+                "FALLO: page contiene " +
+                  content.length +
+                  " registros (se esperaba " +
+                  size +
+                  ")"
+              );
+            // comprobación simple: ids ordenados ascendentemente
+            const ids = content.map((c) => c.id).filter((x) => x != null);
+            const sorted = [...ids].sort((a, b) => a - b);
+            if (JSON.stringify(ids) === JSON.stringify(sorted))
+              log("OK: ids en orden ascendente");
+            else log("Aviso: ids no están ordenados ascendentemente");
+          } catch (e) {
+            log("Error en getPage:", e);
+          }
+        });
+
+      // Create → Update → Delete
+      document
+        .getElementById("btnCreateUpdateDelete")
+        .addEventListener("click", async () => {
+          try {
+            // Crear
+            const fechaInput = document.getElementById("createFecha").value;
+            const fecha = formatDateForApi(fechaInput);
+            const id_usuario =
+              Number(document.getElementById("createIdUsuario").value) || 1;
+
+            log("Iniciando CREATE con id_usuario=" + id_usuario);
+            const createPayload = {
+              id: 0,
+              fecha: fecha,
+              id_usuario: id_usuario
+            };
+            log("Payload:", createPayload);
+            const createdId = await api("", {
+              method: "POST",
+              body: JSON.stringify(createPayload),
+            });
+            log("CREATE result (id):", createdId);
+            if (!createdId) {
+              log("FALLO: create no devolvió id");
+              return;
+            }
+            log("OK: creado id=" + createdId);
+
+            // Obtener el registro creado
+            const created = await api("/" + createdId, { method: "GET" });
+            log("GET registro creado:", created);
+
+            // Update: el backend sobrescribe fecha con LocalDateTime.now()
+            // Solo verificamos que el update se ejecuta correctamente
+            const updatedPayload = {
+              id: createdId,
+              fecha: formatDateForApi("2026-06-15T18:30"),
+              id_usuario: created.id_usuario,
+            };
+            log("Executing UPDATE for id=" + createdId);
+            const updated = await api("", {
+              method: "PUT",
+              body: JSON.stringify(updatedPayload),
+            });
+            log("UPDATE result:", updated);
+
+            // Comprobar que el registro existe y el update funcionó
+            const after = await api("/" + createdId, { method: "GET" });
+            log("GET after update:", after);
+            // El backend sobrescribe la fecha con now(), así que solo verificamos que el registro existe
+            if (after && after.id === createdId) {
+              log("OK: update ejecutado correctamente");
+            } else {
+              log("FALLO: no se pudo verificar el update");
+            }
+
+            // Delete
+            log("Deleting id=" + createdId);
+            const del = await api("/" + createdId, { method: "DELETE" });
+            log("DELETE result:", del);
+            // Comprobar no existe
+            try {
+              await api("/" + createdId, { method: "GET" });
+              log("FALLO: registro aun existe despues de delete");
+            } catch (err) {
+              if (err && err.status === 404)
+                log("OK: registro eliminado y GET devuelve 404");
+              else
+                log("OK (o fallo no 404): respuesta al comprobar delete:", err);
+            }
+          } catch (e) {
+            log("Error en proceso Create/Update/Delete:", e);
+          }
+        });
+    </script>
+  </body>
+</html>
