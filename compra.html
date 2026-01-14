@@ -102,7 +102,7 @@
       <header>
         <h1>Pruebas de la API: /compra</h1>
         <div class="muted">
-          Este fichero realiza llamadas a los endpoints de Categoría y muestra
+          Este fichero realiza llamadas a los endpoints de Compra y muestra
           comprobaciones básicas.
         </div>
       </header>
@@ -170,10 +170,15 @@
         <div class="card">
           <label>Create → Update → Delete</label>
           <div class="muted">
-            Crea una categoría, la actualiza (solo <code>nombre</code>) y luego la borra.
+            Crea una compra (cantidad, precio, idArticulo, idFactura), la actualiza y luego la borra.
           </div>
           <div style="margin-top: 8px" class="row">
-            <input id="createNombre" placeholder="Nombre inicial" value="Prueba API" />
+            <input id="createCantidad" type="number" placeholder="Cantidad" value="2" />
+            <input id="createPrecio" type="number" step="0.01" placeholder="Precio" value="9.99" />
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="createIdArticulo" type="number" placeholder="idArticulo" value="1" />
+            <input id="createIdFactura" type="number" placeholder="idFactura" value="1" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">Ejecutar proceso completo</button>
@@ -187,14 +192,13 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/compra</code>.
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/compra</code>. Para <strong>create</strong> se requieren idArticulo e idFactura — si esos FK no existen, la creación fallará.
       </p>
     </div>
 
     <script>
       //const baseUrl = window.location.origin + "/compra";
-      const baseUrl = "http://localhost:8089/compra";
+      const baseUrl = "http://localhost:8080/compra";
       const logEl = document.getElementById("log");
 
       function log(...args) {
@@ -327,15 +331,14 @@
       // Create -> Update -> Delete
       document.getElementById("btnCreateUpdateDelete").addEventListener("click", async () => {
         try {
-          // Defaults 
-          const cantidad = 1;
-          const precio = 10.0;
-          const id_articulo = 1;
-          const id_factura = 1;
+          const cantidad = Number(document.getElementById("createCantidad").value || 1);
+          const precio = Number(document.getElementById("createPrecio").value || 10.0);
+          const idArticulo = Number(document.getElementById("createIdArticulo").value || 1);
+          const idFactura = Number(document.getElementById("createIdFactura").value || 1);
 
           // CREATE: devuelve Long (id)
-          log('Iniciando CREATE (POST /compra)');
-          const createPayload = { cantidad, precio, id_articulo, id_factura };
+          log('Iniciando CREATE (POST /compra) con cantidad=' + cantidad + ', precio=' + precio);
+          const createPayload = { cantidad, precio, idArticulo, idFactura };
           const createdId = await api("", {
             method: "POST",
             body: JSON.stringify(createPayload),
@@ -349,8 +352,8 @@
           }
           log("OK: creado id=" + newId);
 
-          // UPDATE: PUT con {id, cantidad, precio, id_articulo, id_factura}; devuelve Long (id)
-          const updatedPayload = { id: newId, cantidad: cantidad + 1, precio: precio + 1, id_articulo, id_factura };
+          // UPDATE: PUT con {id, cantidad, precio, idArticulo, idFactura}; devuelve Long (id)
+          const updatedPayload = { id: newId, cantidad: cantidad + 1, precio: precio + 1, idArticulo, idFactura };
           log("Executing UPDATE for id=" + newId);
           const updatedId = await api("", {
             method: "PUT",
@@ -367,7 +370,7 @@
             after.cantidad === updatedPayload.cantidad &&
             after.precio === updatedPayload.precio
           ) log("OK: cantidad y precio actualizados correctamente");
-          else log("FALLO: revisa los campos, campos no actuzalizado");
+          else log("FALLO: revisa los campos, campos no actualizados");
 
           // DELETE: devuelve Long (id)
           log("Deleting id=" + newId);

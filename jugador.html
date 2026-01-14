@@ -169,8 +169,8 @@
         <div class="card">
           <label>Create → Update (no FK) → Delete</label>
           <div class="muted">
-            Crea un jugador (usa idUsuario=1 por defecto), lo
-            actualiza (campos no FK) y luego lo borra.
+            Crea un jugador (usa idUsuario=1 e idEquipo=1 por defecto), lo
+            actualiza (posición, dorsal) y luego lo borra.
           </div>
           <div style="margin-top: 8px" class="row">
             <input
@@ -188,7 +188,8 @@
             <label for="createCapitan">es capitan</label>
           </div>
           <div style="margin-top: 8px" class="row">
-            <input id="createIdUsuario" type="number" value="1" />
+            <input id="createIdUsuario" type="number" value="1" placeholder="idUsuario" />
+            <input id="createIdEquipo" type="number" value="1" placeholder="idEquipo" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
@@ -204,16 +205,15 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/jugador</code>. Para <strong>create</strong> uso
-        idUsuario=1 por defecto — si esos FK no existen, la
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/jugador</code>. Para <strong>create</strong> usa
+        idUsuario=1 e idEquipo=1 por defecto — si esos FK no existen, la
         creación fallará.
       </p>
     </div>
 
     <script>
       //const baseUrl = window.location.origin + "/jugador";
-      const baseUrl = "http://localhost:8089/jugador";
+      const baseUrl = "http://localhost:8080/jugador";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -360,9 +360,12 @@
             const dorsal = Number(document.getElementById("createDorsal").value) || 1;
             const capitan = document.getElementById("createCapitan").checked;
             const idUsuario = Number(document.getElementById("createIdUsuario").value) || 1;
+            const idEquipo = Number(document.getElementById("createIdEquipo").value) || 1;
             log(
               "Iniciando CREATE con idUsuario=" +
-                idUsuario
+                idUsuario +
+                " idEquipo=" +
+                idEquipo
             );
             const createPayload = {
               dorsal,
@@ -370,6 +373,7 @@
               capitan,
               imagen: null,
               idUsuario,
+              idEquipo,
             };
             const created = await api("", {
               method: "POST",
@@ -383,12 +387,11 @@
             const newId = created.id;
             log("OK: creado id=" + newId);
 
-            // Update: cambiar campos no FK
+            // Update: cambiar campos no FK (posición, dorsal, capitán)
             const updatedPayload = Object.assign({}, created, {
               posicion: posicion + " - UPDATED",
               dorsal: Number(dorsal) + 1,
-              idUsuario: Number(idUsuario) + 1,
-              
+              capitan: !capitan,
             });
             log("Executing UPDATE for id=" + newId);
             const updated = await api("", {
@@ -414,10 +417,6 @@
                   after.dorsal +
                   ")"
               );
-            }
-            if (Number(after.idUsuario) !== Number(updatedPayload.idUsuario)) {
-              okUpdate = false;
-              log("FALLO: idUsuario no actualizado");
             }
             if (okUpdate) log("OK: campos no FK actualizados correctamente");
 

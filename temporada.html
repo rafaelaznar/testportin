@@ -179,6 +179,15 @@
             />
           </div>
           <div style="margin-top: 8px">
+            <label for="createIdClub">ID Club</label>
+            <input
+              id="createIdClub"
+              type="number"
+              placeholder="idClub"
+              value="1"
+            />
+          </div>
+          <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
               Ejecutar proceso completo
             </button>
@@ -193,13 +202,13 @@
 
       <p class="muted" style="margin-top: 12px">
   Notas: Asume que el backend está disponible en la misma origen bajo
-  <code>/temporada</code>. Para <strong>create</strong> solo se envía el
-  campo <code>descripcion</code>. El <code>id</code> se genera en el backend.
+  <code>http://localhost:8080/temporada</code>. Para <strong>create</strong> se envía
+  <code>descripcion</code> e <code>idClub</code>. El <code>id</code> se genera en el backend.
       </p>
     </div>
 
     <script>
-      const baseUrl = "http://localhost:8089/temporada";
+      const baseUrl = "http://localhost:8080/temporada";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -348,8 +357,10 @@
             const descripcion =
               document.getElementById("createDescripcion").value ||
               "Prueba API";
+            const idClub =
+              Number(document.getElementById("createIdClub").value) || 1;
             log("Iniciando CREATE temporada...");
-            const createPayload = { descripcion };
+            const createPayload = { descripcion, idClub };
             const created = await api("", {
               method: "POST",
               body: JSON.stringify(createPayload),

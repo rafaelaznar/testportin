@@ -169,7 +169,7 @@
         <div class="card">
           <label>Create → Update (no FK) → Delete</label>
           <div class="muted">
-            Crea un cuota (usa idTemporada=1 por defecto), pone la fecha actual,
+            Crea una cuota (usa idEquipo=1 por defecto), pone la fecha actual,
             actualiza campos no FK y luego lo borra.
           </div>
 
@@ -194,8 +194,8 @@
           </div>
 
           <div style="margin-top: 8px">
-            <label for="createIdTemporada">Id temporada</label>
-            <input id="createIdTemporada" type="number" value="1" />
+            <label for="createIdEquipo">Id equipo</label>
+            <input id="createIdEquipo" type="number" value="1" />
           </div>
 
           <div style="margin-top: 8px">
@@ -212,15 +212,14 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/cuota</code>. Para <strong>create</strong> uso
-        idTemporada=1 por defecto — si ese FK no existe, la creación fallará.
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/cuota</code>. Para <strong>create</strong> usa
+        idEquipo=1 por defecto — si ese FK no existe, la creación fallará.
       </p>
     </div>
 
     <script>
       //const baseUrl = window.location.origin + "/cuota";
-      const baseUrl = "http://localhost:8089/cuota";
+      const baseUrl = "http://localhost:8080/cuota";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -247,6 +246,24 @@
         } catch (err) {
           throw err;
         }
+      }
+
+      // Función para formatear fecha como yyyy-MM-dd HH:mm:ss
+      function formatLocalDateTime(date) {
+        const pad = (n) => String(n).padStart(2, "0");
+        return (
+          date.getFullYear() +
+          "-" +
+          pad(date.getMonth() + 1) +
+          "-" +
+          pad(date.getDate()) +
+          " " +
+          pad(date.getHours()) +
+          ":" +
+          pad(date.getMinutes()) +
+          ":" +
+          pad(date.getSeconds())
+        );
       }
 
       // Helper: fecha actual en formato "yyyy-MM-dd HH:mm:ss"
@@ -392,20 +409,20 @@
               document.getElementById("createDescripcion").value || "Prueba API";
             const cantidad =
               Number(document.getElementById("createCantidad").value) || 0;
-            const idTemporada =
-              Number(document.getElementById("createIdTemporada").value) || 1;
+            const idEquipo =
+              Number(document.getElementById("createIdEquipo").value) || 1;
 
-            const fecha = nowLocalDateTimeString();
+            const fecha = formatLocalDateTime(new Date());
 
             log(
-              "Iniciando CREATE con idTemporada=" + idTemporada + " fecha=" + fecha
+              "Iniciando CREATE con idEquipo=" + idEquipo + " fecha=" + fecha
             );
 
             const createPayload = {
               descripcion,
               cantidad: Number(cantidad.toFixed(2)),
               fecha,
-              idTemporada,
+              idEquipo,
             };
 
             const created = await api("", {
@@ -425,7 +442,7 @@
             const updatedPayload = Object.assign({}, created, {
               descripcion: descripcion + " - UPDATED",
               cantidad: Number((Number(cantidad) + 1).toFixed(2)),
-              fecha: nowLocalDateTimeString(),
+              fecha: formatLocalDateTime(new Date()),
             });
 
             log("Executing UPDATE for id=" + newId);

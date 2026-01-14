@@ -186,10 +186,10 @@
           luego actualiza con los valores proporcionados y finalmente lo borra.
         </div>
         <div style="margin-top: 8px" class="row">
-          <input id="createNombreRival" placeholder="Nombre del rival" value="Rival prueba" />
+          <input id="createRival" placeholder="Nombre del rival" value="Rival prueba" />
         </div>
         <div style="margin-top: 8px" class="row">
-          <input id="createIdEquipo" type="number" value="1" />
+          <input id="createIdLiga" type="number" value="1" />
           <label style="display:flex;align-items:center;gap:6px;">
             <input id="createLocal" type="checkbox" checked /> Local
           </label>
@@ -218,7 +218,7 @@
 
   <script>
     //const baseUrl = window.location.origin + "/articulo";
-    const baseUrl = "http://localhost:8089/partido";
+    const baseUrl = "http://localhost:8080/partido";
     const logEl = document.getElementById("log");
     function log(...args) {
       const t = args
@@ -251,16 +251,16 @@
     document
       .getElementById("btnFill20")
       .addEventListener("click", async () => {
-        log("Iniciando rellena/20...");
+        log("Iniciando fill/20...");
         try {
-          const filled = await api("/rellena/20", { method: "GET" });
-          log("rellena/20 response:", filled);
+          const filled = await api("/fill/20", { method: "GET" });
+          log("fill/20 response:", filled);
           const count = await api("/count", { method: "GET" });
-          log("count after rellena/20:", count);
+          log("count after fill/20:", count);
           if (count === 20) log("OK: count == 20");
           else log("FALLO: count != 20 (valor actual: " + count + ")");
         } catch (e) {
-          log("Error en rellena20:", e);
+          log("Error en fill20:", e);
         }
       });
 
@@ -284,14 +284,14 @@
     document
       .getElementById("btnFill100")
       .addEventListener("click", async () => {
-        log("Iniciando rellena/100...");
+        log("Iniciando fill/100...");
         try {
-          const filled = await api("/rellena/100", { method: "GET" });
-          log("rellena/100 response:", filled);
+          const filled = await api("/fill/100", { method: "GET" });
+          log("fill/100 response:", filled);
           const count = await api("/count", { method: "GET" });
-          log("count after rellena/100:", count);
+          log("count after fill/100:", count);
         } catch (e) {
-          log("Error en rellena100:", e);
+          log("Error en fill100:", e);
         }
       });
 
@@ -361,14 +361,14 @@
       .addEventListener("click", async () => {
         try {
           // Valores que queremos en la UPDATE (leídos del formulario)
-          const nombre_rival =
-            (document.getElementById("createNombreRival") &&
-              document.getElementById("createNombreRival").value) ||
+          const rival =
+            (document.getElementById("createRival") &&
+              document.getElementById("createRival").value) ||
             "Rival prueba";
-          const id_equipo =
+          const idLiga =
             Number(
-              (document.getElementById("createIdEquipo") &&
-                document.getElementById("createIdEquipo").value) ||
+              (document.getElementById("createIdLiga") &&
+                document.getElementById("createIdLiga").value) ||
               1
             ) || 1;
           let localEl = document.getElementById("createLocal");
@@ -383,15 +383,15 @@
             "0-0";
 
           log(
-            "Iniciando proceso: RELLENA/1 -> GET (obtener id) -> PUT (valores) -> GET -> DELETE"
+            "Iniciando proceso: FILL/1 -> GET (obtener id) -> PUT (valores) -> GET -> DELETE"
           );
 
-          // Usar rellena/1 para crear un partido con valores válidos
+          // Usar fill/1 para crear un partido con valores válidos
           const countBefore = await api("/count", { method: "GET" });
           log("Count antes de crear:", countBefore);
 
-          await api("/rellena/1", { method: "GET" });
-          log("Partido creado con rellena/1");
+          await api("/fill/1", { method: "GET" });
+          log("Partido creado con fill/1");
 
           // Obtener el último partido creado
           const page = await api("?page=0&size=1&sort=id,desc", { method: "GET" });
@@ -405,13 +405,13 @@
           // PUT update: ahora enviamos los valores reales (incluyendo id)
           const updatedPayload = {
             id: newId,
-            nombre_rival: nombre_rival,
-            id_equipo: id_equipo,
+            rival: rival,
+            idLiga: idLiga,
             local: local,
             resultado: resultado,
           };
           log("Executing UPDATE for id=" + newId, updatedPayload);
-          const updated = await api("", {
+          const updated = await api("/" + newId, {
             method: "PUT",
             body: JSON.stringify(updatedPayload),
           });
@@ -421,17 +421,17 @@
           const after = await api("/" + newId, { method: "GET" });
           log("GET after update:", after);
           let okUpdate = true;
-          if (after.nombre_rival !== updatedPayload.nombre_rival) {
+          if (after.rival !== updatedPayload.rival) {
             okUpdate = false;
-            log("FALLO: nombre_rival no actualizado");
+            log("FALLO: rival no actualizado");
           }
-          if (Number(after.id_equipo) !== Number(id_equipo)) {
+          if (Number(after.idLiga) !== Number(idLiga)) {
             okUpdate = false;
             log(
-              "FALLO: id_equipo no actualizado - esperado " +
-              id_equipo +
+              "FALLO: idLiga no actualizado - esperado " +
+              idLiga +
               " recibido " +
-              after.id_equipo
+              after.idLiga
             );
           }
           if (Boolean(after.local) !== Boolean(updatedPayload.local)) {

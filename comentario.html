@@ -170,7 +170,7 @@
         <div class="card">
           <label>Create → Update → Delete</label>
           <div class="muted">
-            Crea un comentario (campos: contenido, id_articulo, id_usuario), lo
+            Crea un comentario (campos: contenido, idNoticia, idUsuario), lo
             actualiza y luego lo borra.
           </div>
           <div style="margin-top: 8px" class="row">
@@ -179,8 +179,8 @@ Prueba comentario API</textarea
             >
           </div>
           <div style="margin-top: 8px" class="row">
-            <input id="createIdArticulo" type="number" value="1" />
-            <input id="createIdUsuario" type="number" value="1" />
+            <input id="createIdNoticia" type="number" value="1" placeholder="idNoticia" />
+            <input id="createIdUsuario" type="number" value="1" placeholder="idUsuario" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
@@ -196,8 +196,8 @@ Prueba comentario API</textarea
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/comentarios</code>. Para <strong>create</strong> uso valores por
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/comentario</code>. Para <strong>create</strong> se requieren idNoticia e idUsuario — si esos FK no existen, la creación fallará.
+      </p>
         defecto para id_articulo e id_usuario — si esos FK no existen, la
         creación puede fallar.
       </p>
@@ -205,7 +205,7 @@ Prueba comentario API</textarea
 
     <script>
       //const baseUrl = window.location.origin + "/comentario";
-      const baseUrl = "http://localhost:8089/comentario";
+      const baseUrl = "http://localhost:8080/comentario";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -237,16 +237,16 @@ Prueba comentario API</textarea
       document
         .getElementById("btnFill20")
         .addEventListener("click", async () => {
-          log("Iniciando rellena/20...");
+          log("Iniciando fill/20...");
           try {
-            const filled = await api("/rellena/20", { method: "GET" });
-            log("rellena/20 response:", filled);
+            const filled = await api("/fill/20", { method: "GET" });
+            log("fill/20 response:", filled);
             const count = await api("/count", { method: "GET" });
-            log("count after rellena/20:", count);
+            log("count after fill/20:", count);
             if (count === 20) log("OK: count == 20");
             else log("FALLO: count != 20 (valor actual: " + count + ")");
           } catch (e) {
-            log("Error en rellena20:", e);
+            log("Error en fill20:", e);
           }
         });
 
@@ -269,14 +269,14 @@ Prueba comentario API</textarea
       document
         .getElementById("btnFill100")
         .addEventListener("click", async () => {
-          log("Iniciando rellena/100...");
+          log("Iniciando fill/100...");
           try {
-            const filled = await api("/rellena/100", { method: "GET" });
-            log("rellena/100 response:", filled);
+            const filled = await api("/fill/100", { method: "GET" });
+            log("fill/100 response:", filled);
             const count = await api("/count", { method: "GET" });
-            log("count after rellena/100:", count);
+            log("count after fill/100:", count);
           } catch (e) {
-            log("Error en rellena100:", e);
+            log("Error en fill100:", e);
           }
         });
 
@@ -286,7 +286,7 @@ Prueba comentario API</textarea
           log("Introduce un id válido");
           return;
         }
-        log("GET /comentarios/" + id);
+        log("GET /comentario/" + id);
         try {
           const data = await api("/" + id, { method: "GET" });
           log("GET result:", data);
@@ -347,17 +347,17 @@ Prueba comentario API</textarea
             const contenido =
               document.getElementById("createContenido").value ||
               "Prueba comentario API";
-            const id_articulo =
-              Number(document.getElementById("createIdArticulo").value) || 1;
-            const id_usuario =
+            const idNoticia =
+              Number(document.getElementById("createIdNoticia").value) || 1;
+            const idUsuario =
               Number(document.getElementById("createIdUsuario").value) || 1;
             log(
-              "Iniciando CREATE comentario con id_articulo=" +
-                id_articulo +
-                " id_usuario=" +
-                id_usuario
+              "Iniciando CREATE comentario con idNoticia=" +
+                idNoticia +
+                " idUsuario=" +
+                idUsuario
             );
-            const createPayload = { contenido, id_articulo, id_usuario };
+            const createPayload = { contenido, idNoticia, idUsuario };
             const created = await api("", {
               method: "POST",
               body: JSON.stringify(createPayload),
@@ -385,8 +385,8 @@ Prueba comentario API</textarea
             const updatedPayload = {
               id: newId,
               contenido: contenido + " - UPDATED",
-              id_articulo: id_articulo,
-              id_usuario: id_usuario,
+              idNoticia: idNoticia,
+              idUsuario: idUsuario,
             };
             log("Executing UPDATE for id=" + newId);
             const updated = await api("", {

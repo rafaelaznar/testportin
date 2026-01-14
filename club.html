@@ -203,15 +203,12 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/api/clubs</code>. Para <strong>create</strong> uso
-        idPresidente=1 e idVicepresidente=1 por defecto — si esos FK no existen, la
-        creación fallará.
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/club</code>. Para <strong>create</strong> se requieren idPresidente e idVicepresidente — si esos FK no existen, la creación fallará.
       </p>
     </div>
 
     <script>
-      const baseUrl = "http://localhost:8089/api/clubs";
+      const baseUrl = "http://localhost:8080/club";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -307,7 +304,7 @@
           log("Introduce un id válido");
           return;
         }
-        log("GET /api/clubs/" + id);
+        log("GET /club/" + id);
         try {
           const data = await api("/" + id, { method: "GET" });
           log("GET result:", data);
@@ -326,7 +323,7 @@
           const size = Number(document.getElementById("inputSize").value || 11);
           log(`GET page=${page} size=${size}`);
           try {
-            const data = await api(`/page?page=${page}&size=${size}`, {
+            const data = await api(`?page=${page}&size=${size}`, {
               method: "GET",
             });
             log("Page response meta:", {
@@ -410,7 +407,7 @@
               telefono: "999999999",
             });
             log("Executing UPDATE for id=" + newId);
-            const updated = await api("/" + newId, {
+            const updated = await api("", {
               method: "PUT",
               body: JSON.stringify(updatedPayload),
             });

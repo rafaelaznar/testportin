@@ -217,8 +217,8 @@
     </section>
 
     <p class="muted" style="margin-top: 12px">
-      Notas: Asume que el backend está disponible en la misma origen bajo
-      <code>/tipoarticulo</code>. Para <strong>create</strong> uso
+      Notas: Asume que el backend está disponible en
+      <code>http://localhost:8080/tipoarticulo</code>. Para <strong>create</strong> uso
       idClub=1 por defecto — si ese FK no existe, la creación fallará.
     </p>
   </div>
@@ -226,7 +226,7 @@
   
   <script>
     // dirección del servidor donde está la API
-    const baseUrl = "http://localhost:8089/tipoarticulo";
+    const baseUrl = "http://localhost:8080/tipoarticulo";
     const logEl = document.getElementById("log");
     // función para escribir mensajes en el área de logs
     function log(...args) {

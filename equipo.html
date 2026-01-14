@@ -101,7 +101,7 @@
       <header>
         <h1>Pruebas de la API: /equipo</h1>
         <div class="muted">
-          Este fichero realiza llamadas a los endpoints de Artículo y muestra
+          Este fichero realiza llamadas a los endpoints de Equipo y muestra
           comprobaciones básicas.
         </div>
       </header>
@@ -169,25 +169,20 @@
         <div class="card">
           <label>Create → Update (no FK) → Delete</label>
           <div class="muted">
-            Crea un artículo (usa idTipoarticulo=1 e idClub=1 por defecto), lo
-            actualiza (campos no FK) y luego lo borra.
+            Crea un equipo (usa idEntrenador=1 e idCategoria=1 por defecto), lo
+            actualiza (nombre) y luego lo borra.
           </div>
           <div style="margin-top: 8px">
-            <label for="createDescripcion">Descripción</label>
+            <label for="createNombre">Nombre</label>
             <input
               id="createNombre"
-              placeholder="Descripción inicial"
-              value="Prueba Equipo1"
+              placeholder="Nombre inicial"
+              value="Equipo Prueba"
             />
           </div>
           <div style="margin-top: 8px" class="row">
-          </div>
-          <div style="margin-top: 8px" class="row">
-            <input id="createIdClub" type="number" value="1" />
-            <input id="createIdEntrenador" type="number" value="1" />
-            <input id="createIdCategoria" type="number" value="1" />
-            <input id="createIdLiga" type="number" value="1" />
-            <input id="createIdTemporada" type="number" value="1" />
+            <input id="createIdEntrenador" type="number" value="1" placeholder="idEntrenador" />
+            <input id="createIdCategoria" type="number" value="1" placeholder="idCategoria" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
@@ -203,16 +198,15 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/articulo</code>. Para <strong>create</strong> uso
-        idTipoarticulo=1 e idClub=1 por defecto — si esos FK no existen, la
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/equipo</code>. Para <strong>create</strong> usa
+        idEntrenador=1 e idCategoria=1 por defecto — si esos FK no existen, la
         creación fallará.
       </p>
     </div>
 
     <script>
       //const baseUrl = window.location.origin + "/equipo";
-      const baseUrl = "http://localhost:8089/equipo";
+      const baseUrl = "http://localhost:8080/equipo";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -295,7 +289,7 @@
           log("Introduce un id válido");
           return;
         }
-        log("GET /articulo/" + id);
+        log("GET /equipo/" + id);
         try {
           const data = await api("/" + id, { method: "GET" });
           log("GET result:", data);
@@ -356,70 +350,47 @@
           try {
             // Crear
             const nombre = document.getElementById("createNombre").value || "Prueba Equipo1";
-            const idClub = Number(document.getElementById("createIdClub").value) || 1;
             const idEntrenador = Number(document.getElementById("createIdEntrenador").value) || 1;
             const idCategoria = Number(document.getElementById("createIdCategoria").value) || 1;
-            const idLiga = Number(document.getElementById("createIdLiga").value) || 1;
-            const idTemporada = Number(document.getElementById("createIdTemporada").value) || 0;
+
             log(
-              "Iniciando CREATE con idClub=" +
-                idClub
+              "Iniciando CREATE con idEntrenador=" +
+                idEntrenador +
+                " idCategoria=" +
+                idCategoria
             );
             const createPayload = {
               nombre,
-              id_club: idClub,
-              id_entrenador: idEntrenador,
-              id_categoria: idCategoria,
-              id_liga: idLiga,
-              id_temporada: idTemporada,
+              idEntrenador,
+              idCategoria,
             };
 
-            // POST usando fetch directo para poder leer headers si hace falta
-            let created = null;
+            const created = await api("", {
+              method: "POST",
+              body: JSON.stringify(createPayload),
+            });
+
+            log("CREATE result:", created);
+
             let newId = null;
-            try {
-              const res = await fetch(baseUrl + "", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(createPayload),
-              });
-              const text = await res.text();
-              created = text && text.length ? JSON.parse(text) : null;
-              log("CREATE result:", created);
-
-              if (created && (created.id || created.id === 0)) {
-                newId = Number(created.id);
-              } else if (typeof created === "number") {
-                newId = Number(created);
-              } else if (created && created.data && created.data.id) {
-                newId = Number(created.data.id);
-              } else {
-                const loc = res.headers.get("Location") || res.headers.get("location");
-                if (loc) {
-                  const m = loc.match(/\/(\d+)(?:$|\/)/);
-                  if (m) newId = Number(m[1]);
-                }
-              }
-
-              if (!newId) {
-                log("FALLO: create no devolvió id");
-                return;
-              }
-              log("OK: creado id=" + newId);
-            } catch (e) {
-              log("Error en CREATE fetch:", e);
-              return;
+            if (typeof created === "number") {
+              newId = Number(created);
+            } else if (created && created.id) {
+              newId = Number(created.id);
             }
 
-            // Update: construir payload explícito (snake_case)
+            if (!newId) {
+              log("FALLO: create no devolvió id");
+              return;
+            }
+            log("OK: creado id=" + newId);
+
+            // Update: cambiar solo nombre (no FK)
             const updatedPayload = {
               id: newId,
               nombre: nombre + " - UPDATED",
-              id_club: Number(idClub) + 1,
-              id_entrenador: idEntrenador,
-              id_categoria: idCategoria,
-              id_liga: idLiga,
-              id_temporada: Number(idTemporada) + 1,
+              idEntrenador,
+              idCategoria,
             };
             log("Executing UPDATE for id=" + newId);
             const updated = await api("", {
@@ -428,29 +399,15 @@
             });
             log("UPDATE result:", updated);
 
-            // Comprobar que los campos han cambiado (no FK)
+            // Comprobar que el nombre ha cambiado
             const after = await api("/" + newId, { method: "GET" });
             log("GET after update:", after);
-            let okUpdate = true;
-            if (after.nombre !== updatedPayload.nombre) {
-              okUpdate = false;
-              log("FALLO: nombre no actualizada");
+            
+            if (after && after.nombre === updatedPayload.nombre) {
+              log("OK: nombre actualizado correctamente");
+            } else {
+              log("FALLO: nombre no actualizado");
             }
-            if (Number(after.id_club) !== Number(updatedPayload.id_club)) {
-              okUpdate = false;
-              log(
-                "FALLO: id_club no actualizado (esperado " +
-                  updatedPayload.id_club +
-                  " recibido " +
-                  after.id_club +
-                  ")"
-              );
-            }
-            if (Number(after.id_temporada) !== Number(updatedPayload.id_temporada)) {
-              okUpdate = false;
-              log("FALLO: id_temporada no actualizado");
-            }
-            if (okUpdate) log("OK: campos no FK actualizados correctamente");
 
             // Delete
             log("Deleting id=" + newId);

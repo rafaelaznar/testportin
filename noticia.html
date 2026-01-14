@@ -187,7 +187,7 @@
             />
           </div>
           <div style="margin-top: 8px" class="row">
-            <input id="createId_club" type="number" value="1" />
+            <input id="createIdClub" type="number" value="1" placeholder="idClub" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
@@ -203,14 +203,13 @@
       </section>
 
       <p class="muted" style="margin-top: 12px">
-        Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/Noticia</code>.
+        Notas: Asume que el backend está disponible en <code>http://localhost:8080/noticia</code>. Para <strong>create</strong> usa idClub=1 por defecto — si ese FK no existe, la creación fallará.
       </p>
     </div>
 
     <script>
       //const baseUrl = window.location.origin + "/Noticia";
-      const baseUrl = "http://localhost:8089/Noticia";
+      const baseUrl = "http://localhost:8080/noticia";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -263,7 +262,7 @@
         .addEventListener("click", async () => {
           log("Iniciando fill/20...");
           try {
-            const filled = await api("/rellena/20", { method: "GET" });
+            const filled = await api("/fill/20", { method: "GET" });
             log("fill/20 response:", filled);
             const count = await api("/count", { method: "GET" });
             log("count after fill/20:", count);
@@ -296,7 +295,7 @@
         .addEventListener("click", async () => {
           log("Iniciando fill/100...");
           try {
-            const filled = await api("/rellena/100", { method: "GET" });
+            const filled = await api("/fill/100", { method: "GET" });
             log("fill/100 response:", filled);
             const count = await api("/count", { method: "GET" });
             log("count after fill/100:", count);
@@ -311,7 +310,7 @@
           log("Introduce un id válido");
           return;
         }
-        log("GET /articulo/" + id);
+        log("GET /noticia/" + id);
         try {
           const data = await api("/" + id, { method: "GET" });
           log("GET result:", data);
@@ -375,17 +374,16 @@
               document.getElementById("createTitulo").value || "Prueba API";
             const contenido =
               document.getElementById("createContenido").value || "Prueba API";
-            const fecha = formatLocalDateTime(new Date(Date.now() - 3600000));
-            const imagen = null;
-            const id_club =
-              Number(document.getElementById("createId_club").value) || 1;
-            log("Iniciando CREATE con id_club=" + id_club);
+            const fecha = formatLocalDateTime(new Date());
+            const idClub =
+              Number(document.getElementById("createIdClub").value) || 1;
+            log("Iniciando CREATE con idClub=" + idClub);
             log("Valores: titulo=" + titulo + ", contenido=" + contenido);
             const createPayload = {
               titulo,
               contenido,
               fecha,
-              id_club,
+              idClub,
             };
             log("Payload a enviar:", createPayload);
             const created = await api("", {
@@ -404,9 +402,9 @@
             const updatedPayload = {
               id: newId,
               titulo: titulo + " - UPDATED",
-              contenido: contenido + "- UPDATED",
+              contenido: contenido + " - UPDATED",
               fecha: formatLocalDateTime(new Date()),
-              id_club: id_club,
+              idClub: idClub,
             };
             log("Executing UPDATE for id=" + newId);
             const updated = await api("", {
@@ -419,7 +417,12 @@
             const after = await api("/" + newId, { method: "GET" });
             log("GET after update:", after);
             let okUpdate = true;
-            if (okUpdate) log("OK: campos no FK actualizados correctamente");
+            if (after.titulo === updatedPayload.titulo &&
+                after.contenido === updatedPayload.contenido) {
+              log("OK: campos no FK actualizados correctamente");
+            } else {
+              log("FALLO: algunos campos no fueron actualizados");
+            }
 
             // Delete
             log("Deleting id=" + newId);
