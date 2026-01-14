@@ -1,118 +1,254 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Test PAGOS (Gesportin)</title>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pruebas API Pagos</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background-color: #f4f4f4; }
-        h1 { color: #333; }
-        button { margin: 5px; padding: 10px 15px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; }
-        button:hover { background-color: #0056b3; }
-        button.danger { background-color: #dc3545; }
-        button.danger:hover { background-color: #a71d2a; }
-        .panel { border: 1px solid #ccc; padding: 20px; margin-bottom: 20px; border-radius: 8px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        input, select { padding: 10px; border-radius: 4px; border: 1px solid #ccc; margin-right: 5px; }
-        #log { background: #222; color: #0f0; padding: 15px; border-radius: 5px; white-space: pre-wrap; height: 350px; overflow-y: scroll; font-family: 'Courier New', monospace; font-size: 14px; }
+      :root {
+        --bg: #f7f9fc;
+        --card: #fff;
+        --accent: #0b74de;
+        --danger: #dc3545;
+        --muted: #666;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+        margin: 0;
+        background: var(--bg);
+        color: #111;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 24px auto;
+        padding: 16px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--card);
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(12, 20, 30, 0.06);
+      }
+      button {
+        appearance: none;
+        border: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button.danger {
+        background: var(--danger);
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e3e7ee;
+        margin-top: 6px;
+      }
+      pre {
+        background: #0f1724;
+        color: #e6eef8;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        font-size: 0.85rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      @media (max-width: 520px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
     </style>
-</head>
-<body>
-    <h1>🧪 Testportin: Gestión de PAGOS</h1>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Pruebas de la API: /pago</h1>
+        <div class="muted">Gestión y comprobación de pagos</div>
+      </header>
 
-    <div class="panel">
-        <h3>1. Carga Masiva (Backend genera aleatorios)</h3>
-        <p>Estos botones llaman a la función <code>fill()</code> de Java.</p>
-        <button id="btnFill20">Generar 20 Pagos</button>
-        <button id="btnEmpty" class="danger">Borrar Todo</button>
-        <button id="btnCount">Ver Cantidad (Count)</button>
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div style="flex:1">
+              <label>Fill 20</label>
+              <div class="muted">Genera 20 pagos aleatorios</div>
+            </div>
+            <button id="btnFill20">Fill 20</button>
+          </div>
+        </div>
+
+        <div class="card">
+         <div class="row">
+           <div style="flex:1">
+             <label>Buscar por id</label>
+             <input type="number" id="idToGet" placeholder="ID del pago" />
+           </div>
+           <button id="buscarID">Buscar</button>
+         </div>
+       </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex:1">
+              <label>Empty</label>
+              <div class="muted">Borra todos los pagos</div>
+            </div>
+            <button id="btnEmpty" class="danger">Empty</button>
+          </div>
+        </div>
+
+
+        <div class="card">
+          <div class="row">
+            <div style="flex:1">
+              <label>Count</label>
+              <div class="muted">Cuenta los pagos existentes</div>
+            </div>
+            <button id="btnCount">Count</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Actualizar estado de pago</label>
+          <input type="number" id="idToEdit" placeholder="ID del pago" />
+          <select id="statusSelect">
+            <option value="true">Abonado</option>
+            <option value="false">No abonado</option>
+          </select>
+          <div style="margin-top:8px">
+            <button id="btnUpdate">Actualizar</button>
+          </div>
+        </div>
+      </div>
+
+      <section style="margin-top:16px" class="card">
+        <h3 style="margin:0 0 8px 0">Logs</h3>
+        <pre id="log">Sistema listo. Esperando comandos...</pre>
+      </section>
     </div>
-
-    <div class="panel">
-        <h3>2. Editar Estado de Pago</h3>
-        <p>Introduce el ID del pago y selecciona si está abonado o no.</p>
-        <input type="number" id="idToEdit" placeholder="ID del Pago">
-        <select id="statusSelect">
-            <option value="true">Abonado (Sí)</option>
-            <option value="false">No Abonado (No)</option>
-        </select>
-        <button id="btnUpdate">Actualizar Estado</button>
-    </div>
-
-    <h3>Consola de Resultados:</h3>
-    <pre id="log">Sistema listo. Esperando comandos...</pre>
 
     <script>
-        const baseUrl = "http://localhost:8089/pago"; 
-        const logEl = document.getElementById("log");
+      const baseUrl = "http://localhost:8089/pago";
+      const logEl = document.getElementById("log");
 
-        function log(msg, data = "") {
-            const text = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
-            logEl.textContent = `> ${msg} ${text}\n\n` + logEl.textContent;
+      function log(msg, data = "") {
+        const text =
+          typeof data === "object"
+            ? JSON.stringify(data, null, 2)
+            : data;
+        logEl.textContent = `> ${msg} ${text}\n\n` + logEl.textContent;
+      }
+
+      async function api(path, method = "GET", body = null) {
+        try {
+          const options = {
+            method: method,
+            headers: { "Content-Type": "application/json" },
+          };
+          if (body) options.body = JSON.stringify(body);
+          const res = await fetch(baseUrl + path, options);
+          const text = await res.text();
+          if (!res.ok) throw { status: res.status, msg: text };
+          return text ? JSON.parse(text) : {};
+        } catch (err) {
+          log("ERROR:", err);
+          throw err;
+        }
+      }
+
+      document.getElementById("btnFill20").addEventListener("click", async () => {
+        log("Solicitando crear 20 pagos...");
+        await api("/fill/20", "POST");
+        const total = await api("/count", "GET");
+        log("Total en BDD:", total);
+      });
+
+
+      document.getElementById("buscarID").addEventListener("click", async () => {
+        log("Buscando pago con ID...");
+        const id = document.getElementById("idToGet").value;
+        if (!id) {
+          log("ID inválido");
+          return;
         }
 
-        async function api(path, method = "GET", body = null) {
-            try {
-                const options = { method: method, headers: { "Content-Type": "application/json" } };
-                if (body) options.body = JSON.stringify(body);
-                const res = await fetch(baseUrl + path, options);
-                const text = await res.text();
-                if (!res.ok) throw { status: res.status, msg: text };
-                return text ? JSON.parse(text) : {};
-            } catch (err) {
-                log("ERROR:", err);
-                throw err;
-            }
+        const total= await api( "/"+ id, "GET");
+        log("Total en BDD:", total);
+      });
+
+      document.getElementById("btnEmpty").addEventListener("click", async () => {
+        if (!confirm("¿Borrar toda la tabla?")) return;
+        log("Borrando datos...");
+        await api("/empty", "DELETE");
+        const total = await api("/count", "GET");
+        log("Tabla vacía. Total:", total);
+      });
+
+      document.getElementById("btnCount").addEventListener("click", async () => {
+        const total = await api("/count", "GET");
+        log("Total actual:", total);
+      });
+
+      document.getElementById("btnUpdate").addEventListener("click", async () => {
+        const id = document.getElementById("idToEdit").value;
+        const newStatus =
+          document.getElementById("statusSelect").value === "true";
+
+        if (!id) {
+          log("ID inválido");
+          return;
         }
 
-        document.getElementById("btnFill20").addEventListener("click", async () => {
-            log("⏳ Solicitando al servidor crear 20 pagos...");
-            await api("/fill/20", "POST");
-            const total = await api("/count", "GET");
-            log("✅ ¡Hecho! Total en base de datos:", total);
-        });
-
-        document.getElementById("btnEmpty").addEventListener("click", async () => {
-            if(!confirm("¿Borrar toda la tabla?")) return;
-            log("🗑️ Borrando datos...");
-            await api("/empty", "DELETE");
-            const total = await api("/count", "GET");
-            log("✅ Tabla vacía. Total:", total);
-        });
-
-        document.getElementById("btnCount").addEventListener("click", async () => {
-            const total = await api("/count", "GET");
-            log("📊 Total actual:", total);
-        });
-
-        document.getElementById("btnUpdate").addEventListener("click", async () => {
-            const id = document.getElementById("idToEdit").value;
-            const newStatus = document.getElementById("statusSelect").value === "true";
-
-            if (!id) {
-                log("❌ Por favor, introduce un ID válido.");
-                return;
-            }
-
-            try {
-                log(`🔍 Buscando pago con ID: ${id}...`);
-                const pagoActual = await api("/" + id, "GET");
-
-                if (!pagoActual) {
-                    log("❌ No se encontró el pago.");
-                    return;
-                }
-
-                pagoActual.abonado = newStatus;
-
-                log(`📝 Enviando actualización (Abonado: ${newStatus})...`, pagoActual);
-                await api("", "PUT", pagoActual);
-                
-                const pagoVerificado = await api("/" + id, "GET");
-                log("✅ Pago actualizado correctamente en BDD:", pagoVerificado);
-
-            } catch (e) {
-                log("❌ Error al actualizar:", e);
-            }
-        });
+        try {
+          log("Buscando pago con ID:", id);
+          const pagoActual = await api("/" + id, "GET");
+          pagoActual.abonado = newStatus;
+          await api("", "PUT", pagoActual);
+          const pagoVerificado = await api("/" + id, "GET");
+          log("Pago actualizado:", pagoVerificado);
+        } catch (e) {
+          log("Error al actualizar:", e);
+        }
+      });
     </script>
-</body>
+  </body>
 </html>
