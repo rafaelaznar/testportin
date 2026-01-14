@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pruebas API Cuota</title>
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --card: #fff;
+        --accent: #0b74de;
+        --muted: #666;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+        margin: 0;
+        background: var(--bg);
+        color: #111;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 24px auto;
+        padding: 16px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--card);
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(12, 20, 30, 0.06);
+      }
+      button {
+        appearance: none;
+        border: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #666;
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e3e7ee;
+        margin-top: 6px;
+      }
+      pre {
+        background: #0f1724;
+        color: #e6eef8;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        font-size: 0.85rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      @media (max-width: 520px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Pruebas de la API: /cuota</h1>
+        <div class="muted">
+          Este fichero realiza llamadas a los endpoints de Cuota y muestra
+          comprobaciones básicas.
+        </div>
+      </header>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 20</label>
+              <div class="muted">
+                Llena 20 registros y luego comprueba que count == 20
+              </div>
+            </div>
+            <div><button id="btnFill20">Fill 20</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Empty</label>
+              <div class="muted">Vacía la tabla y comprueba que count == 0</div>
+            </div>
+            <div><button id="btnEmpty" class="secondary">Empty</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 100</label>
+              <div class="muted">
+                Llena 100 registros (no comprueba nada automáticamente)
+              </div>
+            </div>
+            <div><button id="btnFill100">Fill 100</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get by id</label>
+          <input
+            id="inputGetId"
+            type="number"
+            placeholder="id a obtener (ej. 1)"
+          />
+          <div style="margin-top: 8px" class="row">
+            <button id="btnGet">Get(id) y comprobar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get page</label>
+          <div class="muted">
+            Obtener una página: el input es 1-based y se convierte a 0-based
+            para el backend
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="inputPage" type="number" value="1" min="0" />
+            <input id="inputSize" type="number" value="10" min="1" />
+            <button id="btnGetPage">GetPage</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Create → Update (no FK) → Delete</label>
+          <div class="muted">
+            Crea un cuota (usa idTemporada=1 por defecto), pone la fecha actual,
+            actualiza campos no FK y luego lo borra.
+          </div>
+
+          <div style="margin-top: 8px">
+            <label for="createDescripcion">Descripcion</label>
+            <input
+              id="createDescripcion"
+              placeholder="Descripción inicial"
+              value="Prueba API"
+            />
+          </div>
+
+          <div style="margin-top: 8px">
+            <label for="createCantidad">Cantidad</label>
+            <input
+              id="createCantidad"
+              type="number"
+              step="0.01"
+              value="10.00"
+              placeholder="Cantidad"
+            />
+          </div>
+
+          <div style="margin-top: 8px">
+            <label for="createIdTemporada">Id temporada</label>
+            <input id="createIdTemporada" type="number" value="1" />
+          </div>
+
+          <div style="margin-top: 8px">
+            <button id="btnCreateUpdateDelete">
+              Ejecutar proceso completo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section style="margin-top: 16px" class="card">
+        <h3 style="margin: 0 0 8px 0">Logs / Resultados</h3>
+        <pre id="log">Listo.</pre>
+      </section>
+
+      <p class="muted" style="margin-top: 12px">
+        Notas: Asume que el backend está disponible en la misma origen bajo
+        <code>/cuota</code>. Para <strong>create</strong> uso
+        idTemporada=1 por defecto — si ese FK no existe, la creación fallará.
+      </p>
+    </div>
+
+    <script>
+      //const baseUrl = window.location.origin + "/cuota";
+      const baseUrl = "http://localhost:8089/cuota";
+      const logEl = document.getElementById("log");
+      function log(...args) {
+        const t = args
+          .map((a) =>
+            typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)
+          )
+          .join(" ");
+        logEl.textContent = t + "\n\n" + logEl.textContent;
+      }
+
+      async function api(path, options) {
+        try {
+          const res = await fetch(
+            baseUrl + path,
+            Object.assign(
+              { headers: { "Content-Type": "application/json" } },
+              options
+            )
+          );
+          const text = await res.text();
+          let data = text && text.length ? JSON.parse(text) : null;
+          if (!res.ok) throw { status: res.status, body: data || text };
+          return data;
+        } catch (err) {
+          throw err;
+        }
+      }
+
+      // Helper: fecha actual en formato "yyyy-MM-dd HH:mm:ss"
+      function nowBackendDateTimeString() {
+        const d = new Date();
+        const pad = (n) => String(n).padStart(2, "0");
+
+        const yyyy = d.getFullYear();
+        const MM = pad(d.getMonth() + 1);
+        const dd = pad(d.getDate());
+        const HH = pad(d.getHours());
+        const mm = pad(d.getMinutes());
+        const ss = pad(d.getSeconds());
+
+        return `${yyyy}-${MM}-${dd} ${HH}:${mm}:${ss}`;
+      }
+
+      // Fill 20 then count == 20
+      document
+        .getElementById("btnFill20")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/20...");
+          try {
+            const filled = await api("/fill/20", { method: "GET" });
+            log("fill/20 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/20:", count);
+            if (count === 20) log("OK: count == 20");
+            else log("FALLO: count != 20 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en fill20:", e);
+          }
+        });
+
+      // Empty then count == 0
+      document
+        .getElementById("btnEmpty")
+        .addEventListener("click", async () => {
+          log("Iniciando empty...");
+          try {
+            const emptied = await api("/empty", { method: "DELETE" });
+            log("empty response:", emptied);
+            const count = await api("/count", { method: "GET" });
+            log("count after empty:", count);
+            if (count === 0) log("OK: count == 0");
+            else log("FALLO: count != 0 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en empty:", e);
+          }
+        });
+
+      document
+        .getElementById("btnFill100")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/100...");
+          try {
+            const filled = await api("/fill/100", { method: "GET" });
+            log("fill/100 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/100:", count);
+          } catch (e) {
+            log("Error en fill100:", e);
+          }
+        });
+
+      document.getElementById("btnGet").addEventListener("click", async () => {
+        const id = Number(document.getElementById("inputGetId").value);
+        if (!id && id !== 0) {
+          log("Introduce un id válido");
+          return;
+        }
+        log("GET /cuota/" + id);
+        try {
+          const data = await api("/" + id, { method: "GET" });
+          log("GET result:", data);
+          if (data && data.id === id)
+            log("OK: id devuelto coincide con el solicitado");
+          else log("FALLO: id devuelto no coincide");
+        } catch (e) {
+          log("Error en GET:", e);
+        }
+      });
+
+      document
+        .getElementById("btnGetPage")
+        .addEventListener("click", async () => {
+          const pageInputRaw = document.getElementById("inputPage").value;
+          const sizeInputRaw = document.getElementById("inputSize").value;
+          const pageInput =
+            pageInputRaw === "" ? 1 : Number(pageInputRaw || 1);
+          const size = sizeInputRaw === "" ? 10 : Number(sizeInputRaw || 10);
+          const apiPage = Math.max(0, pageInput - 1);
+          log(
+            `GET pageInput=${pageInput} -> apiPage=${apiPage} size=${size}`
+          );
+          try {
+            const data = await api(`?page=${apiPage}&size=${size}`, {
+              method: "GET",
+            });
+            log("Page response meta:", {
+              totalElements: data.totalElements,
+              number: data.number,
+              size: data.size,
+            });
+            const content = data.content || [];
+            log(
+              "content length:",
+              content.length,
+              "ids:",
+              content.map((c) => c.id)
+            );
+            const totalElements = Number(data.totalElements);
+            const hasTotal = Number.isFinite(totalElements);
+            const expected = hasTotal
+              ? Math.max(0, Math.min(size, totalElements - apiPage * size))
+              : size;
+            if (content.length === expected)
+              log("OK: page contiene " + expected + " registros");
+            else
+              log(
+                "FALLO: page contiene " +
+                  content.length +
+                  " registros (se esperaba " +
+                  expected +
+                  ")"
+              );
+            const ids = content.map((c) => c.id).filter((x) => x != null);
+            const sorted = [...ids].sort((a, b) => a - b);
+            if (JSON.stringify(ids) === JSON.stringify(sorted))
+              log("OK: ids en orden ascendente");
+            else log("Aviso: ids no están ordenados ascendentemente");
+          } catch (e) {
+            log("Error en getPage:", e);
+          }
+        });
+
+      document
+        .getElementById("btnCreateUpdateDelete")
+        .addEventListener("click", async () => {
+          try {
+            // Crear
+            const descripcion =
+              document.getElementById("createDescripcion").value || "Prueba API";
+            const cantidad =
+              Number(document.getElementById("createCantidad").value) || 0;
+            const idTemporada =
+              Number(document.getElementById("createIdTemporada").value) || 1;
+
+            const fecha = nowLocalDateTimeString();
+
+            log(
+              "Iniciando CREATE con idTemporada=" + idTemporada + " fecha=" + fecha
+            );
+
+            const createPayload = {
+              descripcion,
+              cantidad: Number(cantidad.toFixed(2)),
+              fecha,
+              idTemporada,
+            };
+
+            const created = await api("", {
+              method: "POST",
+              body: JSON.stringify(createPayload),
+            });
+
+            log("CREATE result:", created);
+            if (!created || !created.id) {
+              log("FALLO: create no devolvió id");
+              return;
+            }
+            const newId = created.id;
+            log("OK: creado id=" + newId);
+
+            // Update: cambiar campos no FK (descripcion, cantidad, fecha)
+            const updatedPayload = Object.assign({}, created, {
+              descripcion: descripcion + " - UPDATED",
+              cantidad: Number((Number(cantidad) + 1).toFixed(2)),
+              fecha: nowLocalDateTimeString(),
+            });
+
+            log("Executing UPDATE for id=" + newId);
+            const updated = await api("", {
+              method: "PUT",
+              body: JSON.stringify(updatedPayload),
+            });
+            log("UPDATE result:", updated);
+
+            // Comprobar que los campos han cambiado (no FK)
+            const after = await api("/" + newId, { method: "GET" });
+            log("GET after update:", after);
+
+            let okUpdate = true;
+
+            if (after.descripcion !== updatedPayload.descripcion) {
+              okUpdate = false;
+              log("FALLO: descripcion no actualizada");
+            }
+            if (Number(after.cantidad) !== Number(updatedPayload.cantidad)) {
+              okUpdate = false;
+              log(
+                "FALLO: cantidad no actualizada (esperado " +
+                  updatedPayload.cantidad +
+                  " recibido " +
+                  after.cantidad +
+                  ")"
+              );
+            }
+
+            if (okUpdate) log("OK: campos no FK actualizados correctamente");
+
+            // Delete
+            log("Deleting id=" + newId);
+            const del = await api("/" + newId, { method: "DELETE" });
+            log("DELETE result:", del);
+
+            // Comprobar no existe
+            try {
+              await api("/" + newId, { method: "GET" });
+              log("FALLO: registro aun existe despues de delete");
+            } catch (err) {
+              if (err && err.status === 404)
+                log("OK: registro eliminado y GET devuelve 404");
+              else
+                log("OK (o fallo no 404): respuesta al comprobar delete:", err);
+            }
+          } catch (e) {
+            log("Error en proceso Create/Update/Delete:", e);
+          }
+        });
+    </script>
+  </body>
+</html>

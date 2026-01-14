@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Pruebas API Artículo</title>
+    <title>Pruebas API Comentarios</title>
     <style>
       :root {
         --bg: #f7f9fc;
@@ -57,14 +57,15 @@
         cursor: pointer;
       }
       button.secondary {
-        background: #666;
+        background: #ff0000;
       }
       label {
         font-size: 0.85rem;
         color: var(--muted);
       }
       input,
-      select {
+      select,
+      textarea {
         width: 100%;
         padding: 8px;
         border-radius: 8px;
@@ -99,9 +100,9 @@
   <body>
     <div class="wrap">
       <header>
-        <h1>Pruebas de la API: /articulo</h1>
+        <h1>Pruebas de la API: /comentarios</h1>
         <div class="muted">
-          Este fichero realiza llamadas a los endpoints de Artículo y muestra
+          Este fichero realiza llamadas a los endpoints de Comentarios y muestra
           comprobaciones básicas.
         </div>
       </header>
@@ -110,12 +111,12 @@
         <div class="card">
           <div class="row">
             <div style="flex: 1">
-              <label>Fill 20</label>
+              <label>Rellena 20</label>
               <div class="muted">
                 Llena 20 registros y luego comprueba que count == 20
               </div>
             </div>
-            <div><button id="btnFill20">Fill 20</button></div>
+            <div><button id="btnFill20">Rellena 20</button></div>
           </div>
         </div>
 
@@ -132,12 +133,12 @@
         <div class="card">
           <div class="row">
             <div style="flex: 1">
-              <label>Fill 100</label>
+              <label>Rellena 100</label>
               <div class="muted">
                 Llena 100 registros (no comprueba nada automáticamente)
               </div>
             </div>
-            <div><button id="btnFill100">Fill 100</button></div>
+            <div><button id="btnFill100">Rellena 100</button></div>
           </div>
         </div>
 
@@ -167,30 +168,19 @@
         </div>
 
         <div class="card">
-          <label>Create → Update (no FK) → Delete</label>
+          <label>Create → Update → Delete</label>
           <div class="muted">
-            Crea un artículo (usa idTipoarticulo=1 e idClub=1 por defecto), lo
-            actualiza (campos no FK) y luego lo borra.
+            Crea un comentario (campos: contenido, id_articulo, id_usuario), lo
+            actualiza y luego lo borra.
           </div>
           <div style="margin-top: 8px" class="row">
-            <input
-              id="createDescripcion"
-              placeholder="Descripción inicial"
-              value="Prueba API"
-            />
+            <textarea id="createContenido" placeholder="Contenido inicial">
+Prueba comentario API</textarea
+            >
           </div>
           <div style="margin-top: 8px" class="row">
-            <input id="createPrecio" type="number" step="0.01" value="10.00" />
-            <input
-              id="createDescuento"
-              type="number"
-              step="0.01"
-              value="0.00"
-            />
-          </div>
-          <div style="margin-top: 8px" class="row">
-            <input id="createIdTipo" type="number" value="1" />
-            <input id="createIdClub" type="number" value="1" />
+            <input id="createIdArticulo" type="number" value="1" />
+            <input id="createIdUsuario" type="number" value="1" />
           </div>
           <div style="margin-top: 8px">
             <button id="btnCreateUpdateDelete">
@@ -207,15 +197,15 @@
 
       <p class="muted" style="margin-top: 12px">
         Notas: Asume que el backend está disponible en la misma origen bajo
-        <code>/articulo</code>. Para <strong>create</strong> uso
-        idTipoarticulo=1 e idClub=1 por defecto — si esos FK no existen, la
-        creación fallará.
+        <code>/comentarios</code>. Para <strong>create</strong> uso valores por
+        defecto para id_articulo e id_usuario — si esos FK no existen, la
+        creación puede fallar.
       </p>
     </div>
 
     <script>
-      //const baseUrl = window.location.origin + "/articulo";
-      const baseUrl = "http://localhost:8089/articulo";
+      //const baseUrl = window.location.origin + "/comentario";
+      const baseUrl = "http://localhost:8089/comentario";
       const logEl = document.getElementById("log");
       function log(...args) {
         const t = args
@@ -244,24 +234,22 @@
         }
       }
 
-      // Fill 20 then count == 20
       document
         .getElementById("btnFill20")
         .addEventListener("click", async () => {
-          log("Iniciando fill/20...");
+          log("Iniciando rellena/20...");
           try {
-            const filled = await api("/fill/20", { method: "GET" });
-            log("fill/20 response:", filled);
+            const filled = await api("/rellena/20", { method: "GET" });
+            log("rellena/20 response:", filled);
             const count = await api("/count", { method: "GET" });
-            log("count after fill/20:", count);
+            log("count after rellena/20:", count);
             if (count === 20) log("OK: count == 20");
             else log("FALLO: count != 20 (valor actual: " + count + ")");
           } catch (e) {
-            log("Error en fill20:", e);
+            log("Error en rellena20:", e);
           }
         });
 
-      // Empty then count == 0
       document
         .getElementById("btnEmpty")
         .addEventListener("click", async () => {
@@ -281,14 +269,14 @@
       document
         .getElementById("btnFill100")
         .addEventListener("click", async () => {
-          log("Iniciando fill/100...");
+          log("Iniciando rellena/100...");
           try {
-            const filled = await api("/fill/100", { method: "GET" });
-            log("fill/100 response:", filled);
+            const filled = await api("/rellena/100", { method: "GET" });
+            log("rellena/100 response:", filled);
             const count = await api("/count", { method: "GET" });
-            log("count after fill/100:", count);
+            log("count after rellena/100:", count);
           } catch (e) {
-            log("Error en fill100:", e);
+            log("Error en rellena100:", e);
           }
         });
 
@@ -298,7 +286,7 @@
           log("Introduce un id válido");
           return;
         }
-        log("GET /articulo/" + id);
+        log("GET /comentarios/" + id);
         try {
           const data = await api("/" + id, { method: "GET" });
           log("GET result:", data);
@@ -342,7 +330,6 @@
                   size +
                   ")"
               );
-            // comprobación simple: ids ordenados ascendentemente
             const ids = content.map((c) => c.id).filter((x) => x != null);
             const sorted = [...ids].sort((a, b) => a - b);
             if (JSON.stringify(ids) === JSON.stringify(sorted))
@@ -357,51 +344,50 @@
         .getElementById("btnCreateUpdateDelete")
         .addEventListener("click", async () => {
           try {
-            // Crear
-            const descripcion =
-              document.getElementById("createDescripcion").value ||
-              "Prueba API";
-            const precio =
-              Number(document.getElementById("createPrecio").value) || 0;
-            const descuento =
-              Number(document.getElementById("createDescuento").value) || 0;
-            const idTipoarticulo =
-              Number(document.getElementById("createIdTipo").value) || 1;
-            const idClub =
-              Number(document.getElementById("createIdClub").value) || 1;
+            const contenido =
+              document.getElementById("createContenido").value ||
+              "Prueba comentario API";
+            const id_articulo =
+              Number(document.getElementById("createIdArticulo").value) || 1;
+            const id_usuario =
+              Number(document.getElementById("createIdUsuario").value) || 1;
             log(
-              "Iniciando CREATE con idTipoarticulo=" +
-                idTipoarticulo +
-                " idClub=" +
-                idClub
+              "Iniciando CREATE comentario con id_articulo=" +
+                id_articulo +
+                " id_usuario=" +
+                id_usuario
             );
-            const createPayload = {
-              descripcion,
-              precio,
-              descuento,
-              imagen: null,
-              idTipoarticulo,
-              idClub,
-            };
+            const createPayload = { contenido, id_articulo, id_usuario };
             const created = await api("", {
               method: "POST",
               body: JSON.stringify(createPayload),
             });
             log("CREATE result:", created);
-            if (!created || !created.id) {
+
+            // backend devuelve solo el id (Long) o un objeto; manejar ambos casos
+            let newId = null;
+            if (created == null) {
               log("FALLO: create no devolvió id");
               return;
             }
-            const newId = created.id;
+            if (typeof created === "number" || typeof created === "string") {
+              newId = Number(created);
+            } else if (created.id != null) {
+              newId = Number(created.id);
+            } else {
+              log("FALLO: respuesta de create inesperada:", created);
+              return;
+            }
+
             log("OK: creado id=" + newId);
 
-            // Update: cambiar campos no FK
-            const updatedPayload = Object.assign({}, created, {
-              descripcion: descripcion + " - UPDATED",
-              precio: (Number(precio) + 1).toFixed(2),
-              descuento: Number(descuento) + 0.5,
-              imagen: null,
-            });
+            // Update: construir payload explícito incluyendo el id para evitar enviar id=null
+            const updatedPayload = {
+              id: newId,
+              contenido: contenido + " - UPDATED",
+              id_articulo: id_articulo,
+              id_usuario: id_usuario,
+            };
             log("Executing UPDATE for id=" + newId);
             const updated = await api("", {
               method: "PUT",
@@ -409,35 +395,17 @@
             });
             log("UPDATE result:", updated);
 
-            // Comprobar que los campos han cambiado (no FK)
+            // Comprobar cambio
             const after = await api("/" + newId, { method: "GET" });
             log("GET after update:", after);
-            let okUpdate = true;
-            if (after.descripcion !== updatedPayload.descripcion) {
-              okUpdate = false;
-              log("FALLO: descripcion no actualizada");
-            }
-            if (Number(after.precio) !== Number(updatedPayload.precio)) {
-              okUpdate = false;
-              log(
-                "FALLO: precio no actualizado (esperado " +
-                  updatedPayload.precio +
-                  " recibido " +
-                  after.precio +
-                  ")"
-              );
-            }
-            if (Number(after.descuento) !== Number(updatedPayload.descuento)) {
-              okUpdate = false;
-              log("FALLO: descuento no actualizado");
-            }
-            if (okUpdate) log("OK: campos no FK actualizados correctamente");
+            if (after && after.contenido === updatedPayload.contenido)
+              log("OK: contenido actualizado correctamente");
+            else log("FALLO: contenido no actualizado");
 
             // Delete
             log("Deleting id=" + newId);
             const del = await api("/" + newId, { method: "DELETE" });
             log("DELETE result:", del);
-            // Comprobar no existe
             try {
               await api("/" + newId, { method: "GET" });
               log("FALLO: registro aun existe despues de delete");

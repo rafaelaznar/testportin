@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Pruebas API Puntuación</title>
+    <style>
+      :root {
+        --bg: #f7f9fc;
+        --card: #fff;
+        --accent: #0b74de;
+        --muted: #666;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: Inter, system-ui, Segoe UI, Roboto, Arial;
+        margin: 0;
+        background: var(--bg);
+        color: #111;
+      }
+      .wrap {
+        max-width: 980px;
+        margin: 24px auto;
+        padding: 16px;
+      }
+      header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      h1 {
+        font-size: 1.1rem;
+        margin: 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--card);
+        padding: 12px;
+        border-radius: 10px;
+        box-shadow: 0 1px 4px rgba(12, 20, 30, 0.06);
+      }
+      button {
+        appearance: none;
+        border: 0;
+        background: var(--accent);
+        color: white;
+        padding: 10px 12px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      button.secondary {
+        background: #666;
+      }
+      label {
+        font-size: 0.85rem;
+        color: var(--muted);
+      }
+      input,
+      select {
+        width: 100%;
+        padding: 8px;
+        border-radius: 8px;
+        border: 1px solid #e3e7ee;
+        margin-top: 6px;
+      }
+      pre {
+        background: #0f1724;
+        color: #e6eef8;
+        padding: 12px;
+        border-radius: 8px;
+        overflow: auto;
+        font-size: 0.85rem;
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      @media (max-width: 520px) {
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <h1>Pruebas de la API: /puntuacion</h1>
+        <div class="muted">
+          Este fichero realiza llamadas a los endpoints de Puntuación y muestra
+          comprobaciones básicas.
+        </div>
+      </header>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 20</label>
+              <div class="muted">
+                Llena 20 registros y luego comprueba que count == 20
+              </div>
+            </div>
+            <div><button id="btnFill20">Fill 20</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Empty</label>
+              <div class="muted">Vacía la tabla y comprueba que count == 0</div>
+            </div>
+            <div><button id="btnEmpty" class="secondary">Empty</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="row">
+            <div style="flex: 1">
+              <label>Fill 100</label>
+              <div class="muted">
+                Llena 100 registros (no comprueba nada automáticamente)
+              </div>
+            </div>
+            <div><button id="btnFill100">Fill 100</button></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get by id</label>
+          <input
+            id="inputGetId"
+            type="number"
+            placeholder="id a obtener (ej. 1)"
+          />
+          <div style="margin-top: 8px" class="row">
+            <button id="btnGet">Get(id) y comprobar</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Get page</label>
+          <div class="muted">
+            Obtener una página: size=11 página=1 (index basada en 0, aquí se
+            usará page=1 según petición)
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="inputPage" type="number" value="1" min="0" />
+            <input id="inputSize" type="number" value="11" min="1" />
+            <button id="btnGetPage">GetPage</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <label>Create → Update (no FK) → Delete</label>
+          <div class="muted">
+            Crea una puntuación (usa idUsuario=1 e idArticulo=1 por defecto), la actualiza (campo puntuacion) y luego la borra.
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input
+              id="createPuntuacion"
+              type="number"
+              placeholder="Puntuación"
+              value="5"
+              min="1"
+              max="5"
+            />
+          </div>
+          <div style="margin-top: 8px" class="row">
+            <input id="createIdUsuario" type="number" placeholder="idUsuario" value="1" />
+            <input id="createIdArticulo" type="number" placeholder="idArticulo" value="1" />
+          </div>
+          <div style="margin-top: 8px">
+            <button id="btnCreateUpdateDelete">
+              Ejecutar proceso completo
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <section style="margin-top: 16px" class="card">
+        <h3 style="margin: 0 0 8px 0">Logs / Resultados</h3>
+        <pre id="log">Listo.</pre>
+      </section>
+
+      <p class="muted" style="margin-top: 12px">
+        Notas: Asume que el backend está disponible en
+        <code>http://localhost:8089/puntuacion</code>. Para <strong>create</strong> usa
+        idUsuario=1 e idArticulo=1 por defecto — si esos FK no existen, la
+        creación fallará.
+      </p>
+    </div>
+
+    <script>
+      const baseUrl = "http://localhost:8089/puntuacion";
+      const logEl = document.getElementById("log");
+      function log(...args) {
+        const t = args
+          .map((a) =>
+            typeof a === "object" ? JSON.stringify(a, null, 2) : String(a)
+          )
+          .join(" ");
+        logEl.textContent = t + "\n\n" + logEl.textContent;
+      }
+
+      async function api(path, options) {
+        try {
+          const res = await fetch(
+            baseUrl + path,
+            Object.assign(
+              { headers: { "Content-Type": "application/json" } },
+              options
+            )
+          );
+          const text = await res.text();
+          let data = text && text.length ? JSON.parse(text) : null;
+          if (!res.ok) throw { status: res.status, body: data || text };
+          return data;
+        } catch (err) {
+          throw err;
+        }
+      }
+
+      // Fill 20 then count == 20
+      document
+        .getElementById("btnFill20")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/20...");
+          try {
+            const filled = await api("/fill/20", { method: "POST" });
+            log("fill/20 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/20:", count);
+            if (count === 20) log("OK: count == 20");
+            else log("FALLO: count != 20 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en fill20:", e);
+          }
+        });
+
+      // Empty then count == 0
+      document
+        .getElementById("btnEmpty")
+        .addEventListener("click", async () => {
+          log("Iniciando empty...");
+          try {
+            const emptied = await api("", { method: "DELETE" });
+            log("empty response:", emptied);
+            const count = await api("/count", { method: "GET" });
+            log("count after empty:", count);
+            if (count === 0) log("OK: count == 0");
+            else log("FALLO: count != 0 (valor actual: " + count + ")");
+          } catch (e) {
+            log("Error en empty:", e);
+          }
+        });
+
+      document
+        .getElementById("btnFill100")
+        .addEventListener("click", async () => {
+          log("Iniciando fill/100...");
+          try {
+            const filled = await api("/fill/100", { method: "POST" });
+            log("fill/100 response:", filled);
+            const count = await api("/count", { method: "GET" });
+            log("count after fill/100:", count);
+          } catch (e) {
+            log("Error en fill100:", e);
+          }
+        });
+
+      document.getElementById("btnGet").addEventListener("click", async () => {
+        const id = Number(document.getElementById("inputGetId").value);
+        if (!id && id !== 0) {
+          log("Introduce un id válido");
+          return;
+        }
+        log("GET /puntuacion/" + id);
+        try {
+          const data = await api("/" + id, { method: "GET" });
+          log("GET result:", data);
+          if (data && data.id === id)
+            log("OK: id devuelto coincide con el solicitado");
+          else log("FALLO: id devuelto no coincide");
+        } catch (e) {
+          log("Error en GET:", e);
+        }
+      });
+
+      document
+        .getElementById("btnGetPage")
+        .addEventListener("click", async () => {
+          const page = Number(document.getElementById("inputPage").value || 1);
+          const size = Number(document.getElementById("inputSize").value || 11);
+          log(`GET page=${page} size=${size}`);
+          try {
+            const data = await api(`?page=${page}&size=${size}`, {
+              method: "GET",
+            });
+            log("Page response meta:", {
+              totalElements: data.totalElements,
+              number: data.number,
+              size: data.size,
+            });
+            const content = data.content || [];
+            log(
+              "content length:",
+              content.length,
+              "ids:",
+              content.map((c) => c.id)
+            );
+            if (content.length === size)
+              log("OK: page contiene " + size + " registros");
+            else
+              log(
+                "FALLO: page contiene " +
+                  content.length +
+                  " registros (se esperaba " +
+                  size +
+                  ")"
+              );
+            // comprobación simple: ids ordenados ascendentemente
+            const ids = content.map((c) => c.id).filter((x) => x != null);
+            const sorted = [...ids].sort((a, b) => a - b);
+            if (JSON.stringify(ids) === JSON.stringify(sorted))
+              log("OK: ids en orden ascendente");
+            else log("Aviso: ids no están ordenados ascendentemente");
+          } catch (e) {
+            log("Error en getPage:", e);
+          }
+        });
+
+      document
+        .getElementById("btnCreateUpdateDelete")
+        .addEventListener("click", async () => {
+          try {
+            // Crear
+            const puntuacion =
+              Number(document.getElementById("createPuntuacion").value) || 5;
+            const idUsuario =
+              Number(document.getElementById("createIdUsuario").value) || 1;
+            const idArticulo =
+              Number(document.getElementById("createIdArticulo").value) || 1;
+            
+            log("Iniciando CREATE con puntuacion=" + puntuacion + " idUsuario=" + idUsuario + " idArticulo=" + idArticulo);
+            const createPayload = {
+              puntuacion,
+              idUsuario,
+              idArticulo
+            };
+            const createdId = await api("", {
+              method: "POST",
+              body: JSON.stringify(createPayload),
+            });
+            log("CREATE result (id):", createdId);
+            if (!createdId) {
+              log("FALLO: create no devolvió id");
+              return;
+            }
+            log("OK: creado id=" + createdId);
+
+            // Obtener el registro recién creado
+            const created = await api("/" + createdId, { method: "GET" });
+            log("GET after create:", created);
+
+            // Update: cambiar campo puntuacion (no FK)
+            const newPuntuacion = puntuacion === 5 ? 4 : 5;
+            const updatedPayload = Object.assign({}, created, {
+              puntuacion: newPuntuacion
+            });
+            log("Executing UPDATE for id=" + createdId + " (cambiar puntuacion a " + newPuntuacion + ")");
+            const updated = await api("", {
+              method: "PUT",
+              body: JSON.stringify(updatedPayload),
+            });
+            log("UPDATE result:", updated);
+
+            // Comprobar que el campo ha cambiado (no FK)
+            const after = await api("/" + createdId, { method: "GET" });
+            log("GET after update:", after);
+            let okUpdate = true;
+            if (Number(after.puntuacion) !== Number(newPuntuacion)) {
+              okUpdate = false;
+              log(
+                "FALLO: puntuacion no actualizada (esperado " +
+                  newPuntuacion +
+                  " recibido " +
+                  after.puntuacion +
+                  ")"
+              );
+            } else {
+              log("OK: puntuacion actualizada correctamente de " + puntuacion + " a " + newPuntuacion);
+            }
+            if (okUpdate) log("OK: campo puntuacion (no FK) actualizado correctamente");
+
+            // Delete
+            log("Deleting id=" + createdId);
+            const del = await api("/" + createdId, { method: "DELETE" });
+            log("DELETE result:", del);
+            // Comprobar no existe
+            try {
+              await api("/" + createdId, { method: "GET" });
+              log("FALLO: registro aun existe despues de delete");
+            } catch (err) {
+              if (err && err.status === 404)
+                log("OK: registro eliminado y GET devuelve 404");
+              else
+                log("OK (o fallo no 404): respuesta al comprobar delete:", err);
+            }
+          } catch (e) {
+            log("Error en proceso Create/Update/Delete:", e);
+          }
+        });
+    </script>
+  </body>
+</html>
+
+        function showResult(testNum, message, type = 'info') {
+            const resultDiv = document.getElementById(`result${testNum}`);
+            resultDiv.className = `result show ${type}`;
+            resultDiv.innerHTML = message;
+            
+            const statusBadge = document.getElementById(`status${testNum}`);
+            if (type === 'success') {
+                statusBadge.innerHTML = '<span class="status-badge success">✓ PASADO</span>';
+            } else if (type === 'error') {
+                statusBadge.innerHTML = '<span class="status-badge error">✗ FALLIDO</span>';
+            }
+        }
+
+        function setLoading(testNum, isLoading) {
+            const button = document.querySelector(`button[onclick="test${testNum}()"]`);
+            button.disabled = isLoading;
+            
+            const statusBadge = document.getElementById(`status${testNum}`);
+            if (isLoading) {
+                statusBadge.innerHTML = '<span class="status-badge pending">⏳ EJECUTANDO...</span>';
+            }
+        }
+
+        async function apiCall(endpoint, options = {}) {
+            const url = `${getApiUrl()}${endpoint}`;
+            console.log(`API Call: ${options.method || 'GET'} ${url}`);
+            
+            const response = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                }
+            });
+            
+            const data = await response.json();
+            console.log('Response:', data);
+            return { response, data };
+        }
+
+        // Test 1: Fill 20 → Count → Verificar 20
+        async function test1() {
+            setLoading(1, true);
+            let log = '';
+            
+            try {
+                log += '🔄 Paso 1: Fill de 20 registros...\n';
+                const { data: fillData } = await apiCall('/fill/20', { method: 'POST' });
+                log += `✓ Fill completado: ${JSON.stringify(fillData)}\n\n`;
+                
+                log += '🔄 Paso 2: Count de registros...\n';
+                const { data: countData } = await apiCall('/count');
+                log += `✓ Count recibido: ${JSON.stringify(countData)}\n\n`;
+                
+                const count = countData;
+                log += '🔄 Paso 3: Verificación...\n';
+                
+                if (count === 20) {
+                    log += `✅ TEST PASADO: Se obtuvieron exactamente 20 registros (${count})\n`;
+                    showResult(1, log, 'success');
+                } else {
+                    log += `❌ TEST FALLIDO: Se esperaban 20 registros pero se obtuvieron ${count}\n`;
+                    showResult(1, log, 'error');
+                }
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                showResult(1, log, 'error');
+            } finally {
+                setLoading(1, false);
+            }
+        }
+
+        // Test 2: Empty → Count → Verificar 0
+        async function test2() {
+            setLoading(2, true);
+            let log = '';
+            
+            try {
+                log += '🔄 Paso 1: Empty (vaciar puntuaciones)...\n';
+                const { data: emptyData } = await apiCall('', { method: 'DELETE' });
+                log += `✓ Empty completado: ${JSON.stringify(emptyData)}\n\n`;
+                
+                log += '🔄 Paso 2: Count de registros...\n';
+                const { data: countData } = await apiCall('/count');
+                log += `✓ Count recibido: ${JSON.stringify(countData)}\n\n`;
+                
+                const count = countData;
+                log += '🔄 Paso 3: Verificación...\n';
+                
+                if (count === 0) {
+                    log += `✅ TEST PASADO: Se obtuvieron 0 registros (tabla vacía)\n`;
+                    showResult(2, log, 'success');
+                } else {
+                    log += `❌ TEST FALLIDO: Se esperaban 0 registros pero se obtuvieron ${count}\n`;
+                    showResult(2, log, 'error');
+                }
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                showResult(2, log, 'error');
+            } finally {
+                setLoading(2, false);
+            }
+        }
+
+        // Test 3: Fill 100
+        async function test3() {
+            setLoading(3, true);
+            let log = '';
+            
+            try {
+                log += '🔄 Fill de 100 registros...\n';
+                const { data: fillData } = await apiCall('/fill/100', { method: 'POST' });
+                log += `✓ Fill completado: ${JSON.stringify(fillData)}\n\n`;
+                
+                log += '🔄 Verificando con count...\n';
+                const { data: countData } = await apiCall('/count');
+                const count = countData;
+                log += `✓ Registros en la tabla: ${count}\n\n`;
+                
+                if (count === 100) {
+                    log += `✅ TEST PASADO: 100 registros creados correctamente\n`;
+                    showResult(3, log, 'success');
+                } else {
+                    log += `⚠️ TEST COMPLETADO: Fill ejecutado (count actual: ${count})\n`;
+                    showResult(3, log, 'success');
+                }
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                showResult(3, log, 'error');
+            } finally {
+                setLoading(3, false);
+            }
+        }
+
+        // Test 4: Get(num) → Verificar ID
+        async function test4() {
+            setLoading(4, true);
+            let log = '';
+            
+            try {
+                // Primero vaciamos y llenamos para tener IDs conocidos
+                log += '🔄 Preparación: Vaciar y Fill de 10 registros...\n';
+                await apiCall('', { method: 'DELETE' });
+                await apiCall('/fill/10', { method: 'POST' });
+                log += `✓ Datos de prueba creados\n\n`;
+                
+                const testId = 1; // Ahora usamos ID 1 que seguro existe
+                log += `🔄 Paso 1: Get del registro con ID ${testId}...\n`;
+                const { response, data: getData } = await apiCall(`/${testId}`);
+                
+                if (response.status === 404) {
+                    throw new Error(`Registro con ID ${testId} no encontrado`);
+                }
+                
+                log += `✓ Registro recibido: ${JSON.stringify(getData, null, 2)}\n\n`;
+                
+                log += '🔄 Paso 2: Verificación del ID...\n';
+                const receivedId = getData.id;
+                
+                if (receivedId == testId) {
+                    log += `✅ TEST PASADO: El ID es correcto (${receivedId} === ${testId})\n`;
+                    showResult(4, log, 'success');
+                } else {
+                    log += `❌ TEST FALLIDO: El ID no coincide (esperado: ${testId}, recibido: ${receivedId})\n`;
+                    showResult(4, log, 'error');
+                }
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                showResult(4, log, 'error');
+            } finally {
+                setLoading(4, false);
+            }
+        }
+
+        // Test 5: GetPage de 11 registros página 1 → Verificar IDs
+        async function test5() {
+            setLoading(5, true);
+            let log = '';
+            
+            try {
+                // Preparar datos limpios
+                log += '🔄 Preparación: Vaciar y Fill de 20 registros...\n';
+                await apiCall('', { method: 'DELETE' });
+                await apiCall('/fill/20', { method: 'POST' });
+                log += `✓ Datos de prueba creados\n\n`;
+                
+                log += '🔄 Paso 1: GetPage de 11 registros de la página 0 (primera página)...\n';
+                const { data: pageData } = await apiCall('?page=0&size=11');
+                log += `✓ Página recibida\n`;
+                log += `  Total elementos: ${pageData.totalElements}\n`;
+                log += `  Elementos en página: ${pageData.content.length}\n\n`;
+                
+                log += '🔄 Paso 2: Verificación de IDs...\n';
+                let allCorrect = true;
+                
+                // Ordenar por ID para asegurar el orden
+                const sortedContent = pageData.content.sort((a, b) => a.id - b.id);
+                
+                for (let i = 0; i < Math.min(11, sortedContent.length); i++) {
+                    const item = sortedContent[i];
+                    const itemId = item.id;
+                    const expectedId = i + 1;
+                    
+                    if (itemId == expectedId) {
+                        log += `  ✓ Registro ${i + 1}: ID ${itemId} (correcto)\n`;
+                    } else {
+                        log += `  ✗ Registro ${i + 1}: ID ${itemId} (esperado: ${expectedId})\n`;
+                        allCorrect = false;
+                    }
+                }
+                
+                log += '\n';
+                if (allCorrect && sortedContent.length === 11) {
+                    log += `✅ TEST PASADO: Todos los IDs son correctos (1-11)\n`;
+                    showResult(5, log, 'success');
+                } else {
+                    log += `❌ TEST FALLIDO: Los IDs no son correctos o la cantidad es incorrecta\n`;
+                    showResult(5, log, 'error');
+                }
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                showResult(5, log, 'error');
+            } finally {
+                setLoading(5, false);
+            }
+        }
+
+        // Test 6: Create → Update → Delete
+        async function test6() {
+            setLoading(6, true);
+            let log = '';
+            let createdId = null;
+            
+            try {
+                // CREATE
+                log += '🔄 Paso 1: CREATE - Crear nueva puntuación...\n';
+                const newItem = {
+                    puntuacion: 5,
+                    comentario: 'Excelente producto de prueba',
+                    fecha: new Date().toISOString().split('T')[0]
+                };
+                
+                const { response: createResponse, data: createData } = await apiCall('', {
+                    method: 'POST',
+                    body: JSON.stringify(newItem)
+                });
+                
+                // El create retorna directamente el ID como número
+                createdId = typeof createData === 'object' ? createData.id : createData;
+                log += `✓ Registro creado con ID: ${createdId}\n\n`;
+                
+                if (!createdId) {
+                    throw new Error('No se pudo obtener el ID del registro creado');
+                }
+                
+                // Verificar que el ID es correcto
+                log += '🔄 Verificando ID del registro creado...\n';
+                const { data: getCreated } = await apiCall(`/${createdId}`);
+                const receivedIdCreate = getCreated.id;
+                
+                if (receivedIdCreate == createdId) {
+                    log += `✓ ID verificado correctamente: ${receivedIdCreate}\n`;
+                    log += `  Puntuación: ${getCreated.puntuacion}\n`;
+                    log += `  Comentario: ${getCreated.comentario}\n`;
+                    log += `  Fecha: ${getCreated.fecha}\n\n`;
+                } else {
+                    throw new Error(`ID incorrecto después del create (esperado: ${createdId}, recibido: ${receivedIdCreate})`);
+                }
+                
+                // UPDATE
+                log += '🔄 Paso 2: UPDATE - Actualizar campos (no FK)...\n';
+                const updatedItem = {
+                    id: createdId,
+                    puntuacion: 4,
+                    comentario: 'Comentario actualizado en test',
+                    fecha: new Date().toISOString().split('T')[0]
+                };
+                
+                const { data: updateData } = await apiCall('', {
+                    method: 'PUT',
+                    body: JSON.stringify(updatedItem)
+                });
+                
+                log += `✓ Update ejecutado: ${JSON.stringify(updateData)}\n\n`;
+                
+                // Verificar que los campos se actualizaron
+                log += '🔄 Verificando cambios...\n';
+                const { data: getUpdated } = await apiCall(`/${createdId}`);
+                
+                let updateCorrect = true;
+                const fieldsToCheck = { puntuacion: 4, comentario: 'Comentario actualizado en test' };
+                
+                for (const [key, value] of Object.entries(fieldsToCheck)) {
+                    const updatedValue = getUpdated[key];
+                    const valuesMatch = updatedValue == value || String(updatedValue) === String(value);
+                    
+                    if (valuesMatch) {
+                        log += `  ✓ ${key}: ${updatedValue} (actualizado correctamente)\n`;
+                    } else {
+                        log += `  ✗ ${key}: ${updatedValue} (esperado: ${value})\n`;
+                        updateCorrect = false;
+                    }
+                }
+                log += '\n';
+                
+                if (!updateCorrect) {
+                    throw new Error('Algunos campos no se actualizaron correctamente');
+                }
+                
+                // DELETE
+                log += '🔄 Paso 3: DELETE - Eliminar registro...\n';
+                const { data: deleteData } = await apiCall(`/${createdId}`, {
+                    method: 'DELETE'
+                });
+                
+                log += `✓ Delete ejecutado: ${JSON.stringify(deleteData)}\n\n`;
+                
+                // Verificar que el registro ya no existe
+                log += '🔄 Verificando que el registro fue eliminado...\n';
+                try {
+                    const { response: getDeleted } = await apiCall(`/${createdId}`);
+                    
+                    if (getDeleted.status === 404 || getDeleted.status === 400) {
+                        log += `✓ Registro eliminado correctamente (no existe)\n\n`;
+                    } else {
+                        throw new Error('El registro todavía existe después del delete');
+                    }
+                } catch (e) {
+                    // Si da error 404, es correcto
+                    if (e.message.includes('404') || e.message.includes('not found')) {
+                        log += `✓ Registro eliminado correctamente (404 - no existe)\n\n`;
+                    } else {
+                        throw e;
+                    }
+                }
+                
+                log += `✅ TEST PASADO: Create → Update → Delete completado correctamente\n`;
+                log += `   - ID creado: ${createdId}\n`;
+                log += `   - Campos actualizados correctamente\n`;
+                log += `   - Registro eliminado exitosamente\n`;
+                showResult(6, log, 'success');
+                
+            } catch (error) {
+                log += `\n❌ ERROR: ${error.message}\n`;
+                
+                // Intentar limpiar el registro creado si existe
+                if (createdId && !isNaN(createdId)) {
+                    try {
+                        log += `\n🔄 Limpiando registro creado (ID: ${createdId})...\n`;
+                        await apiCall(`/${createdId}`, { method: 'DELETE' });
+                        log += `✓ Registro limpiado\n`;
+                    } catch (cleanupError) {
+                        log += `⚠️ No se pudo limpiar el registro: ${cleanupError.message}\n`;
+                    }
+                }
+                
+                showResult(6, log, 'error');
+            } finally {
+                setLoading(6, false);
+            }
+        }
+    </script>
+</body>
+</html>
